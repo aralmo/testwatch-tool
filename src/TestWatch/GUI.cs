@@ -26,7 +26,7 @@ public static class GUI
                 .Where(t => t.TestName
                     .Contains(settings.Filter,StringComparison.CurrentCultureIgnoreCase));
 
-        filteredTests = filteredTests.ToArray().AsReadOnly();
+        filteredTests = filteredTests.ToArray();
 
         AnsiConsole.MarkupLine($"[grey62]{filteredTests.Count()}  ran at {DateTime.Now.ToString("t")}[/]\n");
 
@@ -54,7 +54,7 @@ public static class GUI
                 new
                 {
                     Name = grp.Key,
-                    Tests = grp.OrderBy(t => t.Name).ToArray().AsReadOnly(),
+                    Tests = grp.OrderByDescending(t => t.Outcome).ThenBy(t => t.Name).ToArray(),
                     Count = grp.Count(),
                     Passed = grp.Count(x => x.Outcome == "Passed"),
                     Changed = grp.Any(t => t.Changed)
@@ -77,7 +77,20 @@ public static class GUI
                 testGrid.AddColumns(3);
                 testGrid.Columns[2].Alignment = Justify.Right;
 
-                foreach (var test in group.Tests)
+                var setting = new{
+                    Passed = settings.Show == null || settings.Show.Contains('s'),
+                    Failed = settings.Show == null || settings.Show.Contains('f'),
+                    Ignored = settings.Show == null || settings.Show.Contains('i')
+                };
+
+                var testsToList = group
+                    .Tests
+                    .Where(t => 
+                        (t.Outcome == "Passed" && setting.Passed) ||
+                        (t.Outcome == "Failed" && setting.Failed) ||
+                        (t.Outcome == "NotExecuted" && setting.Ignored));
+
+                foreach (var test in testsToList)
                 {                    
                     string[] row = test.Outcome switch
                     {
@@ -109,7 +122,7 @@ public static class GUI
             }
         }
     }
-    private static string LinkFromStack(string stack)
+    public static string LinkFromStack(string stack)
     {
         var matches = Regex
             .Matches(stack, @"^(.*(?:cs|fs)):line ([0-9].)$", 
@@ -131,25 +144,26 @@ public static class GUI
         return "";
     }
 
-
-    private static object ToPrettyClassName(string inputString)
+    public static object ToPrettyClassName(string inputString)
     {
         string outputString =
             Regex.Replace(
                 inputString,
                 "(?<=[a-z])([S|s]hould)",
-                " Should"
+                " should"
             );
-        return outputString;
+        return outputString.Replace('_', ' ');
     }
 
-    static string ToPrettyTestName(string inputString)
+    public static string ToPrettyTestName(string inputString)
     {
         string outputString = Regex.Replace(
             inputString,
             "(?<=[a-z])([A-Z])",
             " $1"
         );
-        return outputString.ToLower();
+        return outputString
+            .ToLower()
+            .Replace('_', ' ');
     }
 }

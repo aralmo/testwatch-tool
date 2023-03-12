@@ -1,6 +1,14 @@
 using git = Ignore;
 public static class Watcher
 {
+    static git.Ignore defaultIgnore;
+    static Watcher(){
+        defaultIgnore = new git.Ignore();
+        defaultIgnore
+            .Add("*.dll")
+            .Add("*.exe");
+    }
+
     public static event EventHandler<CancellationToken>? Trigger;
 
     public static IDisposable Start(string path, int debouncems)
@@ -36,8 +44,12 @@ public static class Watcher
 
         void Changed(object sender, FileSystemEventArgs e)
         {
-            var match = ignores.FirstOrDefault(ign => e.FullPath.Contains(ign.Path));
-            if (match == null || match.Ignore.IsIgnored(e.FullPath.Replace('\\', '/')) == false)
+
+            var match = ignores
+                .FirstOrDefault(ign => e.FullPath.Contains(ign.Path))
+                ?.Ignore ?? defaultIgnore;
+
+            if (match.IsIgnored(e.FullPath.Replace('\\', '/')) == false)
             {
                 debounce(debouncems);
             }
