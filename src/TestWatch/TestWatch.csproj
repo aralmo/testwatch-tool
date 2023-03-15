@@ -12,7 +12,7 @@
     <PackRelease>true</PackRelease>
 
     <PackageId>TestWatch</PackageId>
-    <Version>0.2.1</Version>
+    <Version>0.2.2</Version>
     <Authors>Aridane Alamo</Authors>
     <Company></Company>
     <ProjectUrl>https://github.com/aralmo/testwatch-tool</ProjectUrl>
